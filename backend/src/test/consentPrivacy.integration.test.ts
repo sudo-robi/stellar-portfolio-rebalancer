@@ -314,6 +314,51 @@ describe('consent and privacy API', () => {
         expect(res.body.error?.code).toBe('FORBIDDEN')
     })
 
+    it('GET /api/portfolio/:id/export returns 401 when JWT is enabled and no token is provided', async () => {
+        const owner = `GOWNERNOAUTH${Math.random().toString(36).slice(2, 8)}`
+
+        const createRes = await request(app)
+            .post('/api/portfolio')
+            .send({
+                userAddress: owner,
+                allocations: { XLM: 70, USDC: 30 },
+                threshold: 5
+            })
+        expect([200, 201]).toContain(createRes.status)
+        const portfolioId = (createRes.body?.data?.portfolioId ?? createRes.body?.portfolioId) as string
+        expect(portfolioId).toBeTruthy()
+
+        const res = await request(app)
+            .get(`/api/portfolio/${portfolioId}/export`)
+            .query({ format: 'json' })
+            .expect(401)
+
+        expect(res.body.error?.code).toBe('UNAUTHORIZED')
+    })
+
+    it('GET /api/portfolio/:id/export returns 401 when JWT is enabled and an invalid token is provided', async () => {
+        const owner = `GOWNERINVTOK${Math.random().toString(36).slice(2, 8)}`
+
+        const createRes = await request(app)
+            .post('/api/portfolio')
+            .send({
+                userAddress: owner,
+                allocations: { XLM: 50, USDC: 50 },
+                threshold: 5
+            })
+        expect([200, 201]).toContain(createRes.status)
+        const portfolioId = (createRes.body?.data?.portfolioId ?? createRes.body?.portfolioId) as string
+        expect(portfolioId).toBeTruthy()
+
+        const res = await request(app)
+            .get(`/api/portfolio/${portfolioId}/export`)
+            .query({ format: 'json' })
+            .set('Authorization', 'Bearer invalid.jwt.token')
+            .expect(401)
+
+        expect(res.body.error?.code).toBe('UNAUTHORIZED')
+    })
+
     it('after DELETE user data, refresh token is rejected', async () => {
         const userId = `GREFRESH${Math.random().toString(36).slice(2, 12)}`
         const loginRes = await request(app).post('/api/auth/login').send({ address: userId }).expect(200)

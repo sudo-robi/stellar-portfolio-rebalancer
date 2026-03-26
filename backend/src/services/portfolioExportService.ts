@@ -174,9 +174,10 @@ export interface ExportResult {
 
 export async function getPortfolioExport(
     portfolioId: string,
-    format: 'json' | 'csv' | 'pdf'
+    format: 'json' | 'csv' | 'pdf',
+    preloadedPortfolio?: Portfolio
 ): Promise<ExportResult | null> {
-    const portfolio = await portfolioStorage.getPortfolio(portfolioId)
+    const portfolio = preloadedPortfolio ?? await portfolioStorage.getPortfolio(portfolioId)
     if (!portfolio) return null
 
     const history = await rebalanceHistoryService.getRebalanceHistory(portfolioId, EXPORT_HISTORY_LIMIT)

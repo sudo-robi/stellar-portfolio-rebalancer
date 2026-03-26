@@ -415,10 +415,10 @@ router.get('/portfolio/:id/export', requireJwtWhenEnabled, async (req: Request, 
         }
         const portfolio = await portfolioStorage.getPortfolio(portfolioId)
         if (!portfolio) return fail(res, 404, 'NOT_FOUND', 'Portfolio not found')
-        if (req.user && portfolio.userAddress !== req.user.address) {
+        if (req.user && portfolio.userAddress.trim() !== req.user.address.trim()) {
             return fail(res, 403, 'FORBIDDEN', 'You can only export your own portfolio')
         }
-        const result = await getPortfolioExport(portfolioId, format as 'json' | 'csv' | 'pdf')
+        const result = await getPortfolioExport(portfolioId, format as 'json' | 'csv' | 'pdf', portfolio)
         if (!result) return fail(res, 404, 'NOT_FOUND', 'Portfolio not found')
         res.setHeader('Content-Type', result.contentType)
         res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`)
